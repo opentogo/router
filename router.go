@@ -2,14 +2,13 @@ package router
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
 )
 
 var (
-	paramsKey  struct{}
+	paramsKey  int
 	parameters = map[string]string{}
 )
 
@@ -34,13 +33,12 @@ func (r Router) parse(path, requestURL string) bool {
 		if len(part) == 0 {
 			continue
 		}
-		if regexp.MustCompile(`^\{.*\}$`).MatchString(part) {
-			namedParam := regexp.MustCompile(`\{?(\w+)\:(.*)?\}`).FindStringSubmatch(part)
-			namedParams = append(namedParams, namedParam[1])
-			pattern = fmt.Sprintf("%s/(%s)", pattern, namedParam[2])
+		if strings.Contains(part, ":") {
+			namedParams = append(namedParams, strings.Split(part, ":")[1])
+			pattern += "/(.+)"
 			continue
 		}
-		pattern = fmt.Sprintf("%s/%s", pattern, part)
+		pattern += "/" + part
 	}
 	if namedValues := regexp.MustCompile(pattern).FindStringSubmatch(requestURL); namedValues != nil {
 		if namedValues[0] == requestURL {
